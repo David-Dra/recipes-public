@@ -14,6 +14,9 @@ export async function startFakeDav(tree, { user = 'reader', password = 'secret' 
   const idOf = (p) => tree[p].id ?? ids.get(p) ?? (ids.set(p, String(next++)), ids.get(p));
   const root = `/remote.php/dav/files/${user}`;
   const auth = 'Basic ' + Buffer.from(`${user}:${password}`).toString('base64');
+  // Like Nextcloud: a folder's ETag changes whenever anything below it changes.
+  const dirEtag = (p) => etag(Object.keys(tree).filter((k) => k.startsWith(p + '/')).sort()
+    .map((k) => k + ':' + (tree[k].body ?? '')).join('|'));
 
   const server = createServer((req, res) => {
     if (status) { res.writeHead(status); return res.end(); }
@@ -36,7 +39,7 @@ export async function startFakeDav(tree, { user = 'reader', password = 'secret' 
         const href = root + p.split('/').map(encodeURIComponent).join('/') + (n.dir ? '/' : '');
         const body = n.body ?? '';
         return `<d:response><d:href>${href}</d:href><d:propstat><d:prop>` +
-          `<d:getetag>&quot;${n.dir ? etag(p + children.join()) : etag(body)}&quot;</d:getetag>` +
+          `<d:getetag>&quot;${n.dir ? dirEtag(p) : etag(body)}&quot;</d:getetag>` +
           `<d:resourcetype>${n.dir ? '<d:collection/>' : ''}</d:resourcetype>` +
           (n.dir ? '' : `<d:getcontentlength>${Buffer.byteLength(body)}</d:getcontentlength>`) +
           `<oc:fileid>${idOf(p)}</oc:fileid>` +
