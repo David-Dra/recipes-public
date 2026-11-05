@@ -1,0 +1,17 @@
+{
+  "name": "recipe-site",
+  "version": "1.0.0",
+  "description": "Public, read-only recipe site that mirrors a Nextcloud Cookbook share",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "fast-xml-parser": "^5.12.0",
+    "smol-toml": "^1.9.1"
+  }
+}

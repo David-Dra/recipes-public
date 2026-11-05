@@ -1,0 +1,4 @@
+# For the website template: how to run this repo.
+type = "node"
+start = "node src/server.js"
+health = "/healthz"

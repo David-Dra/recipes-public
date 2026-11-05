@@ -1,0 +1,41 @@
+# Everything about this website that you can change. Push a change and it is live within ~2 minutes.
+# A wrong value keeps the old version running (see `site status` in the container).
+# Passwords never go here: they are set with `site secret set` in the container.
+
+# Name in the top bar and the browser tab. Default "Recipes".
+title = "Recipes"
+
+# Short line under the title; empty = none.
+tagline = ""
+
+# The site's own address, used for link previews (WhatsApp, iMessage). No trailing slash.
+base_url = "https://recipes.ksi.berlin"
+
+# false = search engines are told not to list the site (only people with the link find it).
+# true  = Google may list it, and /sitemap.xml lists every recipe.
+# Before switching to true: a public German site may need an Impressum and a privacy page.
+indexable = false
+
+# Language code for the page (<html lang>). The texts themselves are in src/strings.js.
+language = "en"
+
+# Accent colour of buttons and the active filter.
+accent = "#38bdf8"
+
+# What a first-time visitor sees: "grid" (big photos) or "list" (ranked rows). Visitors can switch.
+default_view = "grid"
+
+# First sort: "ratio" (protein per 100 kcal), "protein", "kcal" (fewest first), "quick", "newest".
+default_sort = "ratio"
+
+# Folder of the Nextcloud Cookbook share, as the site's Nextcloud user sees it.
+share_path = "/Shared/Recipes"
+
+# How often the site copies new or changed recipes from Nextcloud, in minutes.
+sync_minutes = 5
+
+# Show a small "estimated" mark when the nutrition values were estimated, not stated in the reel.
+show_estimated_mark = true
+
+# Show "from a reel by @creator" with a link to the creator.
+credit_creators = true
