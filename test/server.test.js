@@ -13,8 +13,9 @@ const recipe = {
   carbs: 40, fat: 10, ratio: 7.5, created: null, image: { full: '7-abcdef12-full.jpg', thumb: null },
 };
 
+let lastDataDir;
 async function start(t, { index = null, settings = {} } = {}) {
-  const dataDir = mkdtempSync(join(tmpdir(), 'srv-'));
+  const dataDir = lastDataDir = mkdtempSync(join(tmpdir(), 'srv-'));
   mkdirSync(join(dataDir, 'img'));
   writeFileSync(join(dataDir, 'img', '7-abcdef12-full.jpg'), 'JPEGDATA');
   writeFileSync(join(dataDir, 'secret.txt'), 'nope');
@@ -62,6 +63,14 @@ test('recipe 404 for unknown slug', async (t) => {
   const res = await raw(await start(t, { index: { recipes: [recipe] } }), '/r/nothing-here');
   assert.equal(res.status, 404);
   assert.match(res.body, /Recipe not found/);
+});
+
+test('unreadable image is a 404 and the server keeps running', async (t) => {
+  const base = await start(t);
+  // The sync may delete a file between the exists check and the read; a directory in its place makes the read throw the same way.
+  mkdirSync(join(lastDataDir, 'img', '8-abcdef12-full.jpg'));
+  assert.equal((await raw(base, '/img/8-abcdef12-full.jpg')).status, 404);
+  assert.equal((await raw(base, '/healthz')).status, 200);
 });
 
 test('image is served with long cache', async (t) => {

@@ -37,8 +37,13 @@ export function createApp({ settings: s, dataDir, getIndex }) {
     }
     const img = IMAGE.exec(path);
     if (img) {
-      const file = join(dataDir, 'img', img[1]);
-      if (existsSync(file)) return send(200, 'image/jpeg', readFileSync(file), { 'cache-control': 'public, max-age=31536000, immutable' });
+      let data = null;
+      try {
+        data = readFileSync(join(dataDir, 'img', img[1]));
+      } catch {
+        // missing, or deleted by the sync a moment ago: a 404, never a crash
+      }
+      if (data) return send(200, 'image/jpeg', data, { 'cache-control': 'public, max-age=31536000, immutable' });
     }
     if (path.startsWith('/static/') && Object.hasOwn(statics, path.slice(8))) {
       return send(200, STATIC[path.slice(8)], statics[path.slice(8)], { 'cache-control': 'public, max-age=300' });
