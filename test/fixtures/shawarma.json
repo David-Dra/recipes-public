@@ -1,0 +1,20 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Chicken Shawarma Bowl",
+  "description": "A quick high-protein bowl.",
+  "url": "https://www.instagram.com/reel/ABC123/",
+  "author": { "@type": "Person", "name": "somecreator", "url": "https://www.instagram.com/somecreator/" },
+  "recipeYield": 2,
+  "prepTime": "PT10M",
+  "cookTime": "PT15M",
+  "totalTime": "PT25M",
+  "recipeCategory": "Dinner",
+  "recipeCuisine": "Middle Eastern",
+  "keywords": "chicken,bowl",
+  "recipeIngredient": ["400 g chicken thigh", "150 g skyr", "1 tsp cumin", "120 g rice"],
+  "recipeInstructions": [{ "@type": "HowToStep", "text": "Marinate the chicken." }, "Cook the rice."],
+  "nutrition": { "@type": "NutritionInformation", "calories": "430 kcal", "proteinContent": "48 g", "carbohydrateContent": "38 g", "fatContent": "12 g" },
+  "dateCreated": "2026-10-01T12:00:00+0000",
+  "dateModified": "2026-10-02T12:00:00+0000"
+}
