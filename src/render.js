@@ -96,24 +96,25 @@ function topbar(s, withSearch) {
 </header>`;
 }
 
-function addBox(queue) {
-  const full = queue && queue.left <= 0;
+function addBox(queue, paused) {
+  const full = !paused && queue && queue.left <= 0;
+  const off = full || paused;
   const count = queue ? `<span class="left">${esc(T.left(queue.left, queue.limit))}</span> · ` : '';
   return `<form class="addbox glass" method="post" action="/submit">
   <label for="add-url">${esc(T.addTitle)}</label>
   <div class="addrow"><input id="add-url" name="url" type="url" inputmode="url" autocomplete="off" required maxlength="500"
-    placeholder="${esc(T.addPlaceholder)}"${full ? ' disabled' : ''}><button type="submit"${full ? ' disabled' : ''}>${esc(T.addButton)}</button></div>
-  <p class="addnote" role="status">${full ? `${esc(T.fullToday)} · ` : count}<a href="/queue">${esc(T.queueLink)}</a></p>
+    placeholder="${esc(T.addPlaceholder)}"${off ? ' disabled' : ''}><button type="submit"${off ? ' disabled' : ''}>${esc(T.addButton)}</button></div>
+  <p class="addnote" role="status">${paused ? `${esc(T.paused)} · ` : full ? `${esc(T.fullToday)} · ` : count}<a href="/queue">${esc(T.queueLink)}</a></p>
 </form>`;
 }
 
-export function renderHome(index, s, { submit = false, queue = null } = {}) {
+export function renderHome(index, s, { submit = false, queue = null, paused = false } = {}) {
   const recipes = index ? sortRecipes(index.recipes, s.default_sort) : [];
   const maxRatio = Math.max(1, ...recipes.map((r) => r.ratio || 0));
   const pills = Object.keys(SORTS).map((k) =>
     `<button type="button" class="pill v-${k}" data-sort="${k}" aria-pressed="${k === s.default_sort}">${esc(T.sorts[k])}</button>`).join('');
   const body = `${topbar(s, true)}
-${submit ? addBox(queue) : ''}
+${submit ? addBox(queue, paused) : ''}
 <nav class="pills" aria-label="Sort">${pills}</nav>
 <main class="recipes" data-view="${esc(s.default_view)}">
 ${index ? recipes.map((r) => card(r, maxRatio)).join('\n') : `<p class="note">${esc(T.loading)}</p>`}

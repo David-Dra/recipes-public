@@ -71,3 +71,34 @@ test('hubFromEnv reads NEXUS_HUB_URL and NEXUS_HUB_TOKEN', async () => {
   assert.equal(hubFromEnv({ NEXUS_HUB_URL: 'http://192.0.2.1:8090' }).configured, false);
   assert.equal(hubFromEnv({ NEXUS_HUB_URL: 'http://192.0.2.1:8090', NEXUS_HUB_TOKEN: 't' }).configured, true);
 });
+
+test('cached() forgets an old queue and one from another Berlin day', async (t) => {
+  const fake = await startFakeHub();
+  t.after(fake.close);
+  let clock = Date.UTC(2026, 10, 6, 10);
+  const hub = makeHub({ url: fake.url, token: fake.token, now: () => clock });
+  fake.state.queue.body.day = '2026-11-06';
+  await hub.queue();
+  assert.equal(hub.cached().left, 9);
+  clock += 61_000;
+  assert.equal(hub.cached(), null);          // older than a minute
+  clock = Date.UTC(2026, 10, 6, 10);
+  await hub.queue();
+  fake.state.queue.body.day = '2026-11-05';
+  clock += 11_000;
+  await hub.queue();
+  assert.equal(hub.cached(), null);          // not today's
+});
+
+test('down after a failed call, up again after a good one', async (t) => {
+  const fake = await startFakeHub();
+  t.after(fake.close);
+  const hub = makeHub({ url: fake.url, token: fake.token, timeoutMs: 200, cacheMs: 0 });
+  assert.equal(hub.down, false);
+  fake.state.hang = true;
+  await hub.queue();
+  assert.equal(hub.down, true);
+  fake.state.hang = false;
+  await hub.queue();
+  assert.equal(hub.down, false);
+});

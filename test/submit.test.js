@@ -138,3 +138,23 @@ test('the home never waits for a hanging hub', async (t) => {
   assert.match(home.body, /action="\/submit"/);
   assert.doesNotMatch(home.body, /left today/);
 });
+
+test('hub down: the home box says paused', async (t) => {
+  const { base, fake } = await start(t);
+  fake.state.hang = true;
+  await get(base, '/queue');                  // the failed call marks the hub down
+  const home = await get(base, '/');
+  assert.match(home.body, /paused/);
+  assert.match(home.body, /<input[^>]* disabled/);
+});
+
+test('a strange hub answer never takes the site down', async (t) => {
+  const { base, fake } = await start(t);
+  fake.state.queue.body = { weird: true };
+  const q = await get(base, '/queue');
+  assert.ok([200, 503].includes(q.status));
+  fake.state.submit = { status: 200, body: null };
+  const r = await post(base, form('https://www.instagram.com/reel/ABC/'));
+  assert.ok(r.status < 600);
+  assert.equal((await get(base, '/healthz')).status, 200);
+});

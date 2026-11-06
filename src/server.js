@@ -111,21 +111,23 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
     const json = (status, body) => send(status, 'application/json', JSON.stringify(body), { 'cache-control': 'no-store' });
     if (path === '/submit') {
       if (!submitOn) return html(404, renderNotFound(s));
-      if (req.method === 'POST') return submit(req, index, html, json);
+      if (req.method === 'POST') {
+        return submit(req, index, html, json).catch(() => html(503, renderQueue(null, s, { message: T.paused })));
+      }
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'text/plain', 'method not allowed', { allow: 'GET, HEAD' });
 
     if (path === '/healthz') return send(200, 'text/plain', 'ok');
     if (path === '/') {
       if (submitOn) hub.queue();   // refreshes the cached count for the next visitor; this page never waits for it
-      return html(200, renderHome(index, s, { submit: submitOn, queue: submitOn ? hub.cached() : null }));
+      return html(200, renderHome(index, s, { submit: submitOn, queue: submitOn ? hub.cached() : null, paused: hub.down }));
     }
     if (submitOn && (path === '/queue' || path === '/queue.json')) {
       return hub.queue().then((q) => {
         const queue = withSlugs(q, getIndex());
         if (path === '/queue.json') return json(200, queue || { paused: true, unavailable: true, entries: [] });
         return html(200, renderQueue(queue, s));
-      });
+      }).catch(() => html(503, renderQueue(null, s)));   // never an unhandled rejection: that would stop the site
     }
     if (path.startsWith('/r/')) {
       const r = index?.recipes.find((x) => x.slug === path.slice(3));

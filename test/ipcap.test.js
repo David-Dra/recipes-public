@@ -43,3 +43,9 @@ test('normalise share links like the hub', () => {
     assert.equal(normalise(bad), null, bad);
   }
 });
+
+test('profile-style links and upper-case hosts', () => {
+  assert.equal(normalise('https://www.instagram.com/some.chef_1/reel/ABC12/?igsh=x'), 'https://www.instagram.com/reel/ABC12/');
+  assert.equal(normalise('HTTPS://WWW.INSTAGRAM.COM/reel/ABC12/'), 'https://www.instagram.com/reel/ABC12/');
+  assert.equal(normalise('https://www.instagram.com/a/b/reel/ABC12/'), null);
+});
