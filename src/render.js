@@ -33,6 +33,11 @@ function page(s, { title, description = '', path, image, body, bodyClass = '' })
 ${s.indexable ? '' : '<meta name="robots" content="noindex">\n'}${description ? `<meta name="description" content="${esc(description)}">\n` : ''}${og.map(([p, c]) => `<meta property="${p}" content="${esc(c)}">`).join('\n')}
 <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">
 <meta name="theme-color" content="#0b1026">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="${esc(s.title)}">
 <link rel="stylesheet" href="/static/app.css">
 <link rel="stylesheet" href="/theme.css">
 <script type="module" src="/static/app.js"></script>
@@ -88,7 +93,7 @@ function card(r, maxRatio) {
 
 function topbar(s, withSearch) {
   return `<header class="top glass">
-  <a class="brand" href="/">${esc(s.title)}${s.tagline ? `<small>${esc(s.tagline)}</small>` : ''}</a>
+  <a class="brand" href="/"><img class="logo" src="/favicon.svg" alt="" width="30" height="30">${esc(s.title)}${s.tagline ? `<small>${esc(s.tagline)}</small>` : ''}</a>
   ${withSearch ? `<input class="search" type="search" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}">
   <div class="seg" role="group" aria-label="${esc(T.views)}">
     <button type="button" data-view-set="grid" aria-pressed="${s.default_view === 'grid'}">▦ ${esc(T.grid)}</button>

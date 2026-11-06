@@ -13,6 +13,10 @@ import T from './strings.js';
 // Colours of the sort pills and their values (protein per 100 kcal uses the accent). Readable on the dark glass.
 export const PALETTE = { protein: '#4ade80', kcal: '#fb923c', quick: '#c084fc', newest: '#f472b6' };
 
+// Logo files at the paths browsers and phones look for (public/icons; made from logo.svg)
+const ICONS = { '/favicon.svg': ['logo.svg', 'image/svg+xml'], '/favicon.ico': ['favicon-32.png', 'image/png'],
+  '/favicon-32.png': ['favicon-32.png', 'image/png'], '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'],
+  '/icon-192.png': ['icon-192.png', 'image/png'], '/icon-512.png': ['icon-512.png', 'image/png'] };
 const BG = /^\/bg\/([a-z0-9-]{1,40}-(?:3840|1920|portrait)\.(avif|webp|jpg))$/;
 const BG_TYPES = { avif: 'image/avif', webp: 'image/webp', jpg: 'image/jpeg' };
 
@@ -73,6 +77,10 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
   const submitOn = s.submit_enabled && hub.configured;
   const origin = new URL(s.base_url).origin;
   const statics = Object.fromEntries(Object.keys(STATIC).map((f) => [f, readFileSync(join(ROOT, 'public', f))]));
+  const icons = Object.fromEntries(Object.entries(ICONS).map(([p, [f]]) => [p, readFileSync(join(ROOT, 'public', 'icons', f))]));
+  const manifest = JSON.stringify({ name: s.title, short_name: s.title.slice(0, 12), start_url: '/', scope: '/', display: 'standalone',
+    background_color: '#0b1026', theme_color: '#0b1026', lang: s.language,
+    icons: [192, 512].map((n) => ({ src: `/icon-${n}.png`, sizes: `${n}x${n}`, type: 'image/png', purpose: 'any' })) });
   const colours = Object.entries({ ratio: s.accent, ...PALETTE }).map(([k, c]) => ` --c-${k}: ${c};`).join('');
   const theme = `:root { --accent: ${s.accent};${colours} }\n${backgroundCss(s.background)}`;
 
@@ -140,6 +148,8 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
       }
       if (data) return send(200, img[1].endsWith('.webp') ? 'image/webp' : 'image/jpeg', data, { 'cache-control': 'public, max-age=31536000, immutable' });
     }
+    if (Object.hasOwn(ICONS, path)) return send(200, ICONS[path][1], icons[path], { 'cache-control': 'public, max-age=86400' });
+    if (path === '/manifest.webmanifest') return send(200, 'application/manifest+json', manifest, { 'cache-control': 'public, max-age=3600' });
     const bg = BG.exec(path);
     if (bg) {
       let data = null;

@@ -167,3 +167,7 @@ progress { display: none; }
 .legal h1 { margin: 0 0 8px; font-size: 1.4rem; }
 .legal h2 { margin: 18px 0 4px; font-size: 1rem; }
 .legal p { margin: 0 0 8px; }
+
+/* Logo in the top bar */
+.brand { flex-direction: row; align-items: center; gap: 9px; }
+.logo { flex: none; width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
