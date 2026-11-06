@@ -1,0 +1,5 @@
+crete-*.{avif,webp,jpg}: Balos Lagoon, Kissamos, Crete, Greece
+Photo by Arthur Yeti on Unsplash: https://unsplash.com/photos/rmrR8xasP2g
+Photographer: https://unsplash.com/@arthuryeti
+Licence: Unsplash License, https://unsplash.com/license (free to use; credit given in the site footer)
+Original 5184x3456, resized and cropped for this site (2026-11-06).

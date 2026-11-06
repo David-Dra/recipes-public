@@ -12,6 +12,9 @@ const grams = (v) => `${num(v)} g`;
 // s.legal: an impressum.toml is there (server sets it per request)
 function footer(s) {
   const links = s.legal ? [`<a href="/impressum">${esc(T.imprint)}</a>`, `<a href="/datenschutz">${esc(T.privacy)}</a>`] : [];
+  if (s.background && s.background_credit) {
+    links.push(s.background_url ? `<a href="${esc(s.background_url)}" rel="noopener">${esc(s.background_credit)}</a>` : esc(s.background_credit));
+  }
   return links.length ? `<footer class="foot">${links.join(' · ')}</footer>` : '';
 }
 

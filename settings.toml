@@ -45,5 +45,11 @@ credit_creators = true
 # allowed for everyone together is set in Nexus (RECIPE_SITE_DAILY_LIMIT), not here.
 submit_enabled = true
 
+# Background photo behind the glass: the name of a set of files in public/bg (<name>-1920.jpg/.webp/.avif,
+# <name>-3840.*, <name>-portrait.*), or "" for none. The credit and its link show in the footer.
+background = "crete"
+background_credit = "Photo: Arthur Yeti / Unsplash"
+background_url = "https://unsplash.com/photos/rmrR8xasP2g"
+
 # Links per visitor and day (counted by a hashed IP address, kept in memory only).
 ip_daily_limit = 3

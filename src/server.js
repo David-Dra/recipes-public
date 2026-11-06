@@ -13,6 +13,24 @@ import T from './strings.js';
 // Colours of the sort pills and their values (protein per 100 kcal uses the accent). Readable on the dark glass.
 export const PALETTE = { protein: '#4ade80', kcal: '#fb923c', quick: '#c084fc', newest: '#f472b6' };
 
+const BG = /^\/bg\/([a-z0-9-]{1,40}-(?:3840|1920|portrait)\.(avif|webp|jpg))$/;
+const BG_TYPES = { avif: 'image/avif', webp: 'image/webp', jpg: 'image/jpeg' };
+
+// The background photo behind the glass, darkened so text stays readable: 1920 px, 3840 px on big or sharp screens,
+// a portrait crop on phones. AVIF, WebP and (1920 only) JPEG: the browser takes the first it can show.
+function backgroundCss(name) {
+  if (!name) return '';
+  const set = (size) => `image-set(${[['avif', 'image/avif'], ['webp', 'image/webp'], ['jpg', 'image/jpeg']]
+    .filter(([ext]) => size === '1920' || ext !== 'jpg')
+    .map(([ext, type]) => `url("/bg/${name}-${size}.${ext}") type("${type}")`).join(', ')})`;
+  const layer = (size) => `body::before { background-image: linear-gradient(rgba(6, 10, 30, 0.42), rgba(6, 10, 30, 0.62)), ${set(size)}; }`;
+  return `body::before { content: ""; position: fixed; inset: 0; z-index: -1; background-size: cover; background-position: center; }
+${layer('1920')}
+@media (min-width: 1921px), (min-width: 1100px) and (min-resolution: 2dppx) { ${layer('3840')} }
+@media (orientation: portrait) { ${layer('portrait')} }
+`;
+}
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STATIC = { 'app.css': 'text/css; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
   'sort.js': 'text/javascript; charset=utf-8', 'scale.js': 'text/javascript; charset=utf-8' };
@@ -57,7 +75,7 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
   const origin = new URL(s.base_url).origin;
   const statics = Object.fromEntries(Object.keys(STATIC).map((f) => [f, readFileSync(join(ROOT, 'public', f))]));
   const colours = Object.entries({ ratio: s.accent, ...PALETTE }).map(([k, c]) => ` --c-${k}: ${c};`).join('');
-  const theme = `:root { --accent: ${s.accent};${colours} }\n`;
+  const theme = `:root { --accent: ${s.accent};${colours} }\n${backgroundCss(s.background)}`;
 
   async function submit(req, index, html, json) {
     const wantsJson = (req.headers.accept || '').includes('application/json');
@@ -122,6 +140,12 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
         // missing, or deleted by the sync a moment ago: a 404, never a crash
       }
       if (data) return send(200, img[1].endsWith('.webp') ? 'image/webp' : 'image/jpeg', data, { 'cache-control': 'public, max-age=31536000, immutable' });
+    }
+    const bg = BG.exec(path);
+    if (bg) {
+      let data = null;
+      try { data = readFileSync(join(ROOT, 'public', 'bg', bg[1])); } catch { /* not there: 404 below */ }
+      if (data) return send(200, BG_TYPES[bg[2]], data, { 'cache-control': 'public, max-age=604800' });
     }
     if (path.startsWith('/static/') && Object.hasOwn(statics, path.slice(8))) {
       return send(200, STATIC[path.slice(8)], statics[path.slice(8)], { 'cache-control': 'public, max-age=300' });

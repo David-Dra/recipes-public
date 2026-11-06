@@ -50,7 +50,8 @@ test('rejects indexable as a string', () => {
 
 test('repo settings.toml loads', () => {
   const s = loadSettings(new URL('../settings.toml', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
-  assert.deepEqual({ ...s, title: DEFAULTS.title, tagline: DEFAULTS.tagline }, DEFAULTS);
+  const photo = { background: DEFAULTS.background, background_credit: DEFAULTS.background_credit, background_url: DEFAULTS.background_url };
+  assert.deepEqual({ ...s, title: DEFAULTS.title, tagline: DEFAULTS.tagline, ...photo }, DEFAULTS);   // the photo: background.test.js
 });
 
 test('submit settings: defaults and checks', () => {

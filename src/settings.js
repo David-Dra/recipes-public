@@ -1,6 +1,7 @@
 // settings.toml: every value that can change per website. Read once at start; a bad value stops the app,
 // so the website template keeps the previous release live and reports why.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { parse } from 'smol-toml';
 
 export const DEFAULTS = Object.freeze({
@@ -18,6 +19,9 @@ export const DEFAULTS = Object.freeze({
   credit_creators: true,
   submit_enabled: true,
   ip_daily_limit: 3,
+  background: '',
+  background_credit: '',
+  background_url: '',
 });
 
 const oneOf = (...xs) => (v) => xs.includes(v) || `one of ${xs.join(', ')}`;
@@ -25,6 +29,9 @@ const isString = (v) => typeof v === 'string' || 'text in quotes';
 const isBool = (v) => typeof v === 'boolean' || 'true or false';
 
 const CHECKS = {
+  background: (v) => (typeof v === 'string' && /^[a-z0-9-]{0,40}$/.test(v)) || 'a name like crete (files public/bg/<name>-*.avif), or ""',
+  background_credit: (v) => (typeof v === 'string' && v.length <= 120) || 'text in quotes',
+  background_url: (v) => (typeof v === 'string' && (v === '' || /^https:\/\/\S+$/.test(v))) || 'an https:// link or ""',
   title: (v) => (typeof v === 'string' && v.trim() !== '') || 'non-empty text',
   tagline: isString,
   base_url: (v) => (typeof v === 'string' && /^https?:\/\/[^\s/]+(\/[^\s]*[^/\s])?$/.test(v)) || 'a URL like https://recipes.example.org (no trailing slash)',
@@ -49,6 +56,9 @@ export function loadSettings(path) {
     const ok = CHECKS[key](value);
     if (ok !== true) throw new Error(`settings.toml: ${key}: must be ${ok}`);
     out[key] = value;
+  }
+  if (out.background && !existsSync(join(dirname(path), 'public', 'bg', `${out.background}-1920.jpg`))) {
+    throw new Error(`settings.toml: background: no files public/bg/${out.background}-*.jpg/.webp/.avif`);
   }
   return out;
 }
