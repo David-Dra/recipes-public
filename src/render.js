@@ -54,9 +54,14 @@ function heroPhoto(r) {
   return i.full ? img('heroimg', i.full, '', false) : noimg(r, 'heroimg');
 }
 
+// Each value carries the colour of its sort pill (v-<sort key>); protein per 100 kcal comes first and biggest.
 function stats(r) {
-  return [r.protein !== null && `${grams(r.protein)} ${T.protein}`, r.kcal !== null && `${num(r.kcal)} ${T.kcal}`,
-    r.minutes && `${r.minutes} ${T.min}`].filter(Boolean).map((x) => `<span>${esc(x)}</span>`).join('<span class="dot">·</span>');
+  const ratio = r.ratio !== null ? `<span class="v-ratio big-ratio"><b>${esc(num(r.ratio))}</b> ${esc(T.ratio)}</span>` : '';
+  const rest = [
+    r.protein !== null && ['protein', `${grams(r.protein)} ${T.protein}`], r.kcal !== null && ['kcal', `${num(r.kcal)} ${T.kcal}`],
+    r.minutes && ['quick', `${r.minutes} ${T.min}`],
+  ].filter(Boolean).map(([k, x]) => `<span class="v-${k}">${esc(x)}</span>`).join('<span class="dot">·</span>');
+  return ratio + rest;
 }
 
 function card(r, maxRatio) {
@@ -64,9 +69,9 @@ function card(r, maxRatio) {
   const data = Object.entries({ ratio: r.ratio, protein: r.protein, kcal: r.kcal, minutes: r.minutes, created: r.created })
     .map(([k, v]) => (v === null || v === undefined ? '' : ` data-${k}="${esc(v)}"`)).join('');
   return `<a class="card glass" href="/r/${esc(r.slug)}" data-name="${esc(r.name)}" data-search="${esc(search)}"${data}>
-  <div class="thumbwrap">${cardPhoto(r)}${r.ratio !== null ? `<span class="badge">${esc(num(r.ratio))} g</span>` : ''}</div>
+  <div class="thumbwrap">${cardPhoto(r)}${r.ratio !== null ? `<span class="badge v-ratio">${esc(num(r.ratio))} g</span>` : ''}</div>
   <div class="info"><h2>${esc(r.name)}</h2><p class="stats">${stats(r)}</p>${r.ratio !== null ? `<progress max="${esc(maxRatio)}" value="${esc(r.ratio)}"></progress>` : ''}</div>
-  ${r.ratio !== null ? `<div class="big"><b>${esc(num(r.ratio))}</b><span>${esc(T.ratioShort)}</span></div>` : ''}
+  ${r.ratio !== null ? `<div class="big v-ratio"><b>${esc(num(r.ratio))}</b><span>${esc(T.ratioShort)}</span></div>` : ''}
 </a>`;
 }
 
@@ -96,7 +101,7 @@ export function renderHome(index, s, { submit = false, queue = null } = {}) {
   const recipes = index ? sortRecipes(index.recipes, s.default_sort) : [];
   const maxRatio = Math.max(1, ...recipes.map((r) => r.ratio || 0));
   const pills = Object.keys(SORTS).map((k) =>
-    `<button type="button" class="pill" data-sort="${k}" aria-pressed="${k === s.default_sort}">${esc(T.sorts[k])}</button>`).join('');
+    `<button type="button" class="pill v-${k}" data-sort="${k}" aria-pressed="${k === s.default_sort}">${esc(T.sorts[k])}</button>`).join('');
   const body = `${topbar(s, true)}
 ${submit ? addBox(queue) : ''}
 <nav class="pills" aria-label="Sort">${pills}</nav>
@@ -111,11 +116,11 @@ ${index ? recipes.map((r) => card(r, maxRatio)).join('\n') : `<p class="note">${
 function tiles(r, s) {
   if (r.kcal === null && r.protein === null) return '';
   const mark = r.estimated && s.show_estimated_mark ? `<p class="estimated">${esc(T.estimated)}</p>` : '';
-  const tile = (v, label, key = '') => (v ? `<div class="tile glass${key}"><b>${esc(v)}</b><span>${esc(label)}</span></div>` : '');
+  const tile = (v, label, cls = '') => (v ? `<div class="tile glass${cls}"><b>${esc(v)}</b><span>${esc(label)}</span></div>` : '');
   return `<section class="tiles">
-  ${tile(r.ratio !== null && grams(r.ratio), T.ratio, ' key')}
-  ${tile(r.protein !== null && grams(r.protein), T.protein)}
-  ${tile(r.kcal !== null && num(r.kcal), T.kcal)}
+  ${tile(r.ratio !== null && num(r.ratio), T.ratio, ' key v-ratio')}
+  ${tile(r.protein !== null && grams(r.protein), T.protein, ' v-protein')}
+  ${tile(r.kcal !== null && num(r.kcal), T.kcal, ' v-kcal')}
   ${tile(r.carbs !== null && r.fat !== null && `${num(r.carbs)} / ${grams(r.fat)}`, T.carbsFat)}
 </section>${mark}`;
 }
@@ -123,7 +128,7 @@ function tiles(r, s) {
 export function renderRecipe(r, s) {
   const by = [
     s.credit_creators && r.creator && `${esc(T.fromReel)} <a href="${esc(r.creator.url)}" rel="noopener noreferrer">@${esc(r.creator.name.replace(/^@/, ''))}</a>`,
-    r.minutes && esc(`${r.minutes} ${T.min}`),
+    r.minutes && `<span class="v-quick">${esc(`${r.minutes} ${T.min}`)}</span>`,
     r.servings && esc(`${r.servings} ${T.servingsShort}`),
   ].filter(Boolean).join(' · ');
   const servings = r.servings ? `<div class="serv" data-servings="${esc(r.servings)}">${esc(T.servings)}

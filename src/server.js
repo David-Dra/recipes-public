@@ -9,6 +9,9 @@ import { makeIpCap } from './ipcap.js';
 import { normalise } from './link.js';
 import T from './strings.js';
 
+// Colours of the sort pills and their values (protein per 100 kcal uses the accent). Readable on the dark glass.
+export const PALETTE = { protein: '#4ade80', kcal: '#fb923c', quick: '#c084fc', newest: '#f472b6' };
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STATIC = { 'app.css': 'text/css; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
   'sort.js': 'text/javascript; charset=utf-8', 'scale.js': 'text/javascript; charset=utf-8' };
@@ -43,7 +46,8 @@ export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) })
   const ipcap = makeIpCap(s.ip_daily_limit);
   const origin = new URL(s.base_url).origin;
   const statics = Object.fromEntries(Object.keys(STATIC).map((f) => [f, readFileSync(join(ROOT, 'public', f))]));
-  const theme = `:root { --accent: ${s.accent}; }\n`;
+  const colours = Object.entries({ ratio: s.accent, ...PALETTE }).map(([k, c]) => ` --c-${k}: ${c};`).join('');
+  const theme = `:root { --accent: ${s.accent};${colours} }\n`;
 
   async function submit(req, index, html, json) {
     const wantsJson = (req.headers.accept || '').includes('application/json');

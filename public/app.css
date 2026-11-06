@@ -51,7 +51,19 @@ button, input { font: inherit; color: inherit; }
 /* Sort pills */
 .pills { display: flex; gap: 8px; overflow-x: auto; max-width: 1200px; margin: 0 auto 14px; padding-bottom: 2px; scrollbar-width: none; }
 .pill { flex: none; border: 1px solid var(--rim); background: var(--glass-hi); border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; }
-.pill[aria-pressed="true"] { background: var(--accent); border-color: transparent; color: #04121c; font-weight: 600; }
+.pill[aria-pressed="true"] { background: var(--c, var(--accent)); border-color: transparent; color: #04121c; font-weight: 600; }
+.pill:not([aria-pressed="true"]) { color: var(--c); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+
+/* One colour per value, the same as its sort pill (theme.css sets --c-*) */
+.v-ratio { --c: var(--c-ratio, var(--accent)); }
+.v-protein { --c: var(--c-protein); }
+.v-kcal { --c: var(--c-kcal); }
+.v-quick { --c: var(--c-quick); }
+.v-newest { --c: var(--c-newest); }
+.stats .v-protein, .stats .v-kcal, .stats .v-quick, .by .v-quick, .badge, .big b, .tile b { color: var(--c); }
+.stats .big-ratio { display: block; white-space: normal; color: var(--c); font-size: 0.85rem; margin-bottom: 2px; }
+.big-ratio b { font-size: 1.35rem; font-weight: 750; letter-spacing: -0.01em; }
+.recipes[data-view="list"] .big-ratio { display: none; }
 
 /* Recipe cards: one markup, two views */
 .recipes { max-width: 1200px; margin: 0 auto; display: grid; gap: 14px; }
@@ -84,8 +96,8 @@ progress { display: none; }
   appearance: none; background: var(--glass-hi);
 }
 .recipes[data-view="list"] progress::-webkit-progress-bar { background: var(--glass-hi); }
-.recipes[data-view="list"] progress::-webkit-progress-value { background: linear-gradient(90deg, var(--accent), #a78bfa); border-radius: 6px; }
-.recipes[data-view="list"] progress::-moz-progress-bar { background: linear-gradient(90deg, var(--accent), #a78bfa); border-radius: 6px; }
+.recipes[data-view="list"] progress::-webkit-progress-value { background: linear-gradient(90deg, var(--c-ratio, var(--accent)), color-mix(in srgb, var(--c-ratio, var(--accent)) 55%, #ffffff)); border-radius: 6px; }
+.recipes[data-view="list"] progress::-moz-progress-bar { background: linear-gradient(90deg, var(--c-ratio, var(--accent)), color-mix(in srgb, var(--c-ratio, var(--accent)) 55%, #ffffff)); border-radius: 6px; }
 .recipes[data-view="list"] .big { display: block; flex: none; text-align: right; padding-right: 6px; }
 .big b { display: block; font-size: 1.3rem; }
 .big span { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }

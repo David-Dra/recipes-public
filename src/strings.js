@@ -13,7 +13,7 @@ export default {
   min: 'min',
   servings: 'Servings',
   servingsShort: 'servings',
-  ratio: 'protein / 100 kcal',
+  ratio: 'g protein / 100 kcal',
   ratioShort: 'P / 100 kcal',
   protein: 'protein',
   kcal: 'kcal',
