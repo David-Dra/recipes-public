@@ -8,6 +8,8 @@ import { makeDav } from '../src/webdav.js';
 import { startSync } from '../src/sync.js';
 import { createApp } from '../src/server.js';
 import { DEFAULTS } from '../src/settings.js';
+import { makeHub } from '../src/hub.js';
+import { startFakeHub } from './fake-hub.js';
 
 // A small solid-colour PNG (browsers sniff it fine even when served as image/jpeg in this demo).
 function png(r, g, b, w = 64, h = 48) {
@@ -50,5 +52,16 @@ const dataDir = mkdtempSync(join(tmpdir(), 'recipes-demo-'));
 let index = null;
 startSync({ dav: makeDav({ url: fake.url, user: fake.user, password: fake.password }), sharePath: R, dataDir, minutes: 60, onIndex: (i) => (index = i) });
 const port = Number(process.env.PORT) || 3000;
-createApp({ settings: { ...DEFAULTS, title: 'Demo Kitchen', base_url: `http://localhost:${port}` }, dataDir, getIndex: () => index })
+// A fake hub with one link in each state, so the box and /queue can be looked at.
+const hub = await startFakeHub();
+const at = (h, m) => `2026-11-06T${h}:${m}:00Z`;
+const e = (id, sc, state, extra = {}) => ({ id, shortcode: sc, url: `https://www.instagram.com/reel/${sc}/`, state, position: null,
+  reason: null, created_at: at('09', id.slice(1).padStart(2, '0')), counts: true, ...extra });
+hub.state.queue.body = { day: '2026-11-06', limit: 10, left: 4, paused: false, entries: [
+  e('e1', 'DEMO1', 'saved'), e('e2', 'C0ffee', 'failed', { reason: 'no recipe in this video' }),
+  e('e3', 'Dx91kA', 'writing'), e('e4', 'Bq7_zz', 'watching'), e('e5', 'Ab12Cd', 'waiting', { position: 2 }),
+  e('e6', 'DEMO2', 'already', { counts: false }),
+] };
+createApp({ settings: { ...DEFAULTS, title: 'Demo Kitchen', base_url: `http://localhost:${port}` }, dataDir, getIndex: () => index,
+  hub: makeHub({ url: hub.url, token: hub.token }) })
   .listen(port, () => console.log(`demo on http://localhost:${port}`));

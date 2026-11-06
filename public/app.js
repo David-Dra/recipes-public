@@ -62,5 +62,53 @@ function servings() {
   }
 }
 
+// The reel-link box: sends without leaving the page, says what happened, updates the count.
+function addBox() {
+  const form = $('form.addbox');
+  if (!form) return;
+  const note = $('.addnote', form);
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const button = $('button', form);
+    button.disabled = true;
+    try {
+      const res = await fetch('/submit', { method: 'POST', headers: { accept: 'application/json',
+        'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(new FormData(form)) });
+      const data = await res.json().catch(() => ({ message: 'Something went wrong. Try again.' }));
+      note.textContent = `${data.message} `;
+      const link = document.createElement('a');
+      link.href = data.entry ? `/queue#${encodeURIComponent(data.entry.id)}` : '/queue';
+      link.textContent = 'See the queue';
+      note.append(link);
+      if (res.ok) form.reset();
+    } catch {
+      note.textContent = 'Adding recipes is paused right now. Try again later.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
+// The queue page refreshes itself while it is open (the server renders, the page swaps the list in).
+function queueRefresh() {
+  const list = $('.queuelist[data-refresh]');
+  if (!list) return;
+  const every = Number(list.dataset.refresh) * 1000;
+  setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      const res = await fetch('/queue', { headers: { accept: 'text/html' } });
+      if (!res.ok) return;
+      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      const fresh = $('.queuelist', doc);
+      const intro = $('.intro .addnote', doc);
+      if (fresh) list.replaceChildren(...fresh.childNodes);
+      if (intro && $('.intro .addnote')) $('.intro .addnote').replaceWith(intro);
+    } catch { /* offline for a moment: try again next time */ }
+  }, every);
+}
+
 home();
 servings();
+addBox();
+queueRefresh();

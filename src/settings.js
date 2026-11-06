@@ -16,6 +16,8 @@ export const DEFAULTS = Object.freeze({
   sync_minutes: 5,
   show_estimated_mark: true,
   credit_creators: true,
+  submit_enabled: true,
+  ip_daily_limit: 3,
 });
 
 const oneOf = (...xs) => (v) => xs.includes(v) || `one of ${xs.join(', ')}`;
@@ -35,6 +37,8 @@ const CHECKS = {
   sync_minutes: (v) => (Number.isInteger(v) && v >= 1 && v <= 1440) || 'a whole number from 1 to 1440',
   show_estimated_mark: isBool,
   credit_creators: isBool,
+  submit_enabled: isBool,
+  ip_daily_limit: (v) => (Number.isInteger(v) && v >= 1 && v <= 100) || 'a whole number from 1 to 100',
 };
 
 export function loadSettings(path) {

@@ -3,7 +3,11 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { renderHome, renderRecipe, renderNotFound, esc } from './render.js';
+import { renderHome, renderRecipe, renderNotFound, renderQueue, esc } from './render.js';
+import { makeHub } from './hub.js';
+import { makeIpCap } from './ipcap.js';
+import { normalise } from './link.js';
+import T from './strings.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STATIC = { 'app.css': 'text/css; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
@@ -15,9 +19,52 @@ const HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
-export function createApp({ settings: s, dataDir, getIndex }) {
+const MAX_BODY = 2048;
+
+function readBody(req) {   // resolves the body, or null when it is bigger than MAX_BODY
+  return new Promise((resolve) => {
+    let size = 0;
+    const parts = [];
+    req.on('data', (c) => { size += c.length; if (size <= MAX_BODY) parts.push(c); });
+    req.on('end', () => resolve(size > MAX_BODY ? null : Buffer.concat(parts).toString('utf8')));
+    req.on('error', () => resolve(null));
+  });
+}
+
+// Saved entries get their recipe page once the sync has the recipe (matched by the reel's shortcode).
+function withSlugs(queue, index) {
+  if (!queue) return null;
+  const bySc = new Map((index?.recipes || []).filter((r) => r.reelUrl).map((r) => [r.reelUrl.split('/').filter(Boolean).at(-1), r.slug]));
+  return { ...queue, entries: queue.entries.map((e) => (bySc.has(e.shortcode) ? { ...e, slug: bySc.get(e.shortcode) } : e)) };
+}
+
+export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) }) {
+  const submitOn = s.submit_enabled && hub.configured;
+  const ipcap = makeIpCap(s.ip_daily_limit);
+  const origin = new URL(s.base_url).origin;
   const statics = Object.fromEntries(Object.keys(STATIC).map((f) => [f, readFileSync(join(ROOT, 'public', f))]));
   const theme = `:root { --accent: ${s.accent}; }\n`;
+
+  async function submit(req, index, html, json) {
+    const wantsJson = (req.headers.accept || '').includes('application/json');
+    const fail = (status, message) => (wantsJson ? json(status, { ok: false, message }) : html(status, renderQueue(hub.cached(), s, { message })));
+    if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'forbidden');
+    const body = await readBody(req);
+    if (body === null) return fail(413, 'too big');
+    const link = normalise(new URLSearchParams(body).get('url'));
+    if (!link) return fail(400, T.badLink);
+    const ip = req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '';
+    if (!ipcap.take(ip)) return fail(429, T.ipFull(s.ip_daily_limit));
+    const r = await hub.submit(link);
+    if (r.status !== 200 || r.body?.counts === false) ipcap.give(ip);   // nothing was added: the visitor keeps the slot
+    if (r.status === 429) return fail(429, T.fullToday);
+    if (r.status === 400) return fail(400, T.badLink);
+    if (r.status !== 200) return fail(503, T.paused);
+    if (wantsJson) return json(200, { ok: true, message: T.added, entry: r.body });
+    const res = html.res;
+    res.writeHead(303, { location: `/queue#${encodeURIComponent(r.body.id)}`, 'cache-control': 'no-store' });
+    return res.end();
+  }
 
   return createServer((req, res) => {
     const send = (status, type, body, extra = {}) => {
@@ -25,12 +72,28 @@ export function createApp({ settings: s, dataDir, getIndex }) {
       res.end(req.method === 'HEAD' ? undefined : body);
     };
     const html = (status, body) => send(status, 'text/html; charset=utf-8', body, { 'cache-control': 'no-cache' });
-    if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'text/plain', 'method not allowed', { allow: 'GET, HEAD' });
-
+    html.res = res;
     const path = req.url.split('?')[0];
     const index = getIndex();
+    const json = (status, body) => send(status, 'application/json', JSON.stringify(body), { 'cache-control': 'no-store' });
+    if (path === '/submit') {
+      if (!submitOn) return html(404, renderNotFound(s));
+      if (req.method === 'POST') return submit(req, index, html, json);
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'text/plain', 'method not allowed', { allow: 'GET, HEAD' });
+
     if (path === '/healthz') return send(200, 'text/plain', 'ok');
-    if (path === '/') return html(200, renderHome(index, s));
+    if (path === '/') {
+      if (submitOn) hub.queue();   // refreshes the cached count for the next visitor; this page never waits for it
+      return html(200, renderHome(index, s, { submit: submitOn, queue: submitOn ? hub.cached() : null }));
+    }
+    if (submitOn && (path === '/queue' || path === '/queue.json')) {
+      return hub.queue().then((q) => {
+        const queue = withSlugs(q, getIndex());
+        if (path === '/queue.json') return json(200, queue || { paused: true, unavailable: true, entries: [] });
+        return html(200, renderQueue(queue, s));
+      });
+    }
     if (path.startsWith('/r/')) {
       const r = index?.recipes.find((x) => x.slug === path.slice(3));
       return r ? html(200, renderRecipe(r, s)) : html(404, renderNotFound(s));

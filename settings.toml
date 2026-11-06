@@ -39,3 +39,11 @@ show_estimated_mark = true
 
 # Show "from a reel by @creator" with a link to the creator.
 credit_creators = true
+
+# The "add a recipe from a reel link" box. Links go to Nexus, which writes the recipe into Cookbook.
+# Needs NEXUS_HUB_URL and NEXUS_HUB_TOKEN as secrets; without them the box is hidden. How many links a day are
+# allowed for everyone together is set in Nexus (RECIPE_SITE_DAILY_LIMIT), not here.
+submit_enabled = true
+
+# Links per visitor and day (counted by a hashed IP address, kept in memory only).
+ip_daily_limit = 3

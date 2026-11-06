@@ -52,3 +52,10 @@ test('repo settings.toml loads', () => {
   const s = loadSettings(new URL('../settings.toml', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
   assert.deepEqual({ ...s, title: DEFAULTS.title, tagline: DEFAULTS.tagline }, DEFAULTS);
 });
+
+test('submit settings: defaults and checks', () => {
+  assert.equal(DEFAULTS.submit_enabled, true);
+  assert.equal(DEFAULTS.ip_daily_limit, 3);
+  assert.throws(() => loadSettings(file('ip_daily_limit = 0\n')), /ip_daily_limit: must be/);
+  assert.throws(() => loadSettings(file('submit_enabled = "yes"\n')), /submit_enabled: must be true or false/);
+});
