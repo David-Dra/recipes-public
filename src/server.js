@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderHome, renderRecipe, renderNotFound, renderQueue, renderImpressum, renderDatenschutz, esc } from './render.js';
 import { loadLegal } from './legal.js';
 import { makeHub, hubFromEnv } from './hub.js';
-import { makeIpCap } from './ipcap.js';
+import { berlinClock } from './berlin.js';
 import { normalise } from './link.js';
 import T from './strings.js';
 
@@ -71,7 +71,6 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
     if (at !== legalAt) { legalAt = at; legal = at ? loadLegal(dataDir) : null; s = { ...base, legal: Boolean(legal) }; }
   };
   const submitOn = s.submit_enabled && hub.configured;
-  const ipcap = makeIpCap(s.ip_daily_limit);
   const origin = new URL(s.base_url).origin;
   const statics = Object.fromEntries(Object.keys(STATIC).map((f) => [f, readFileSync(join(ROOT, 'public', f))]));
   const colours = Object.entries({ ratio: s.accent, ...PALETTE }).map(([k, c]) => ` --c-${k}: ${c};`).join('');
@@ -85,11 +84,9 @@ export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({})
     if (body === null) return fail(413, 'too big');
     const link = normalise(new URLSearchParams(body).get('url'));
     if (!link) return fail(400, T.badLink);
-    const ip = req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '';
-    if (!ipcap.take(ip)) return fail(429, T.ipFull(s.ip_daily_limit));
     const r = await hub.submit(link);
-    if (r.status !== 200 || r.body?.counts === false) ipcap.give(ip);   // nothing was added: the visitor keeps the slot
-    if (r.status === 429) return fail(429, T.fullToday);
+    // The hub's cap counts everyone together (10 per 3 h); there is no limit per visitor.
+    if (r.status === 429) return fail(429, T.fullNow(s.ask_for_more, berlinClock(r.body?.detail?.next_free_at)));
     if (r.status === 400) return fail(400, T.badLink);
     if (r.status !== 200) return fail(503, T.paused);
     if (wantsJson) return json(200, { ok: true, message: T.added, entry: r.body });

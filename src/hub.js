@@ -1,6 +1,6 @@
 // Client for the Nexus hub's recipe-site API (token scoped to /api/recipe-site/). It never throws and never makes
 // a page wait long: an unreachable or slow hub means "adding is paused", the rest of the site is not affected.
-import { berlinDay } from './ipcap.js';
+import { berlinDay } from './berlin.js';
 
 const PAUSED = { status: 503, body: { message: 'paused' } };
 const MAX_AGE = 60_000;   // a cached queue older than this is not shown (the count would be stale)

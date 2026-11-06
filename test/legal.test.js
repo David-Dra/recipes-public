@@ -50,7 +50,8 @@ test('with the file: both pages, escaped, and linked in the footer', async (t) =
   assert.match(imp.body, /§ 5 DDG/);
   const ds = await get('/datenschutz');
   assert.equal(ds.status, 200);
-  for (const w of ['Cloudflare', 'Nextcloud', 'Nexus', 'keine Cookies', 'Hash', 'Neustart', 'anna@example.org']) {
+  assert.doesNotMatch(ds.body, /Begrenzung pro Besucher/);   // the site counts no visitors any more
+  for (const w of ['Cloudflare', 'Nextcloud', 'Nexus', 'keine Cookies', 'anna@example.org']) {
     assert.match(ds.body, new RegExp(w), w);
   }
   const home = await get('/');

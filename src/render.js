@@ -2,6 +2,7 @@
 // that is not our own markup goes through esc(). No inline scripts or styles (the CSP forbids them).
 import T from './strings.js';
 import { SORTS, sortRecipes } from '../public/sort.js';
+import { berlinClock } from './berlin.js';
 
 const ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ENT[c]);
@@ -96,15 +97,18 @@ function topbar(s, withSearch) {
 </header>`;
 }
 
-function addBox(queue, paused) {
+const leftText = (q) => T.left(q.left, q.limit, q.window_hours || 3);
+
+function addBox(queue, paused, s) {
   const full = !paused && queue && queue.left <= 0;
   const off = full || paused;
-  const count = queue ? `<span class="left">${esc(T.left(queue.left, queue.limit))}</span> · ` : '';
+  const count = queue ? `<span class="left">${esc(leftText(queue))}</span> · ` : '';
+  const fullNote = full ? T.fullNow(s.ask_for_more, berlinClock(queue.next_free_at)) : '';
   return `<form class="addbox glass" method="post" action="/submit">
   <label for="add-url">${esc(T.addTitle)}</label>
   <div class="addrow"><input id="add-url" name="url" type="url" inputmode="url" autocomplete="off" required maxlength="500"
     placeholder="${esc(T.addPlaceholder)}"${off ? ' disabled' : ''}><button type="submit"${off ? ' disabled' : ''}>${esc(T.addButton)}</button></div>
-  <p class="addnote" role="status">${paused ? `${esc(T.paused)} · ` : full ? `${esc(T.fullToday)} · ` : count}<a href="/queue">${esc(T.queueLink)}</a></p>
+  <p class="addnote" role="status">${paused ? `${esc(T.paused)} · ` : full ? `${esc(fullNote)} · ` : count}<a href="/queue">${esc(T.queueLink)}</a></p>
 </form>`;
 }
 
@@ -114,7 +118,7 @@ export function renderHome(index, s, { submit = false, queue = null, paused = fa
   const pills = Object.keys(SORTS).map((k) =>
     `<button type="button" class="pill v-${k}" data-sort="${k}" aria-pressed="${k === s.default_sort}">${esc(T.sorts[k])}</button>`).join('');
   const body = `${topbar(s, true)}
-${submit ? addBox(queue, paused) : ''}
+${submit ? addBox(queue, paused, s) : ''}
 <nav class="pills" aria-label="Sort">${pills}</nav>
 <main class="recipes" data-view="${esc(s.default_view)}">
 ${index ? recipes.map((r) => card(r, maxRatio)).join('\n') : `<p class="note">${esc(T.loading)}</p>`}
@@ -165,8 +169,6 @@ export function renderNotFound(s) {
   return page(s, { title: s.title, path: '/', body: `${topbar(s, false)}<main class="recipe"><p class="note">${esc(T.notFound)} <a href="/">← ${esc(T.back)}</a></p></main>` });
 }
 
-const CLOCK = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
-const clock = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : CLOCK.format(d); };
 
 export function renderQueue(queue, s, { message = '' } = {}) {
   const note = message ? `<p class="note flash" role="status">${esc(message)}</p>` : '';
@@ -180,12 +182,12 @@ export function renderQueue(queue, s, { message = '' } = {}) {
       const word = (T.states[e.state] || T.states.failed)(e.position);
       const reason = e.reason ? `: ${esc(e.reason)}` : '';
       const open = e.slug ? ` · <a href="/r/${esc(e.slug)}">${esc(T.openRecipe)}</a>` : '';
-      return `<li class="glass q-${esc(e.state)}" data-entry="${esc(e.id)}"><time datetime="${esc(e.created_at)}">${esc(clock(e.created_at))}</time>
+      return `<li class="glass q-${esc(e.state)}" data-entry="${esc(e.id)}"><time datetime="${esc(e.created_at)}">${esc(berlinClock(e.created_at))}</time>
   <a class="reel" href="${esc(e.url)}" rel="noopener" target="_blank">${esc(T.original)} ${esc(e.shortcode)}</a>
   <span class="qstate">${esc(word)}${reason}${open}</span></li>`;
     }).join('\n')}</ol>`;
   }
-  const head = queue ? `<p class="addnote">${esc(T.left(queue.left, queue.limit))}${queue.paused ? ` · ${esc(T.pcOff)}` : ''}</p>` : '';
+  const head = queue ? `<p class="addnote">${esc(leftText(queue))}${queue.paused ? ` · ${esc(T.pcOff)}` : ''}</p>` : '';
   const body = `${topbar(s, false)}
 <main class="queuepage">
 <section class="glass intro"><h1>${esc(T.queueTitle)}</h1><p>${esc(T.queueIntro)}</p>${head}</section>

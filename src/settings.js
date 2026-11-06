@@ -18,7 +18,7 @@ export const DEFAULTS = Object.freeze({
   show_estimated_mark: true,
   credit_creators: true,
   submit_enabled: true,
-  ip_daily_limit: 3,
+  ask_for_more: 'Ask David for more.',
   background: '',
   background_credit: '',
   background_url: '',
@@ -45,7 +45,7 @@ const CHECKS = {
   show_estimated_mark: isBool,
   credit_creators: isBool,
   submit_enabled: isBool,
-  ip_daily_limit: (v) => (Number.isInteger(v) && v >= 1 && v <= 100) || 'a whole number from 1 to 100',
+  ask_for_more: (v) => (typeof v === 'string' && v.length <= 120) || 'text in quotes',
 };
 
 export function loadSettings(path) {

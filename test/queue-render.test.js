@@ -20,7 +20,7 @@ test('queue page: every state in plain words', () => {
   const html = renderQueue(q, S);
   for (const words of ['#2 in line', 'kitchen PC is off', 'Watching the video', 'Writing the recipe', 'Saved',
     'no recipe in this video', 'Already a recipe', 'reel is private or deleted', 'not your link: try again later',
-    '3 of 10 left today']) assert.match(html, new RegExp(words), words);
+    '3 of 10 left']) assert.match(html, new RegExp(words), words);
   assert.match(html, /href="\/r\/pancakes"/);
   assert.match(html, /data-entry="e1"/);
   assert.doesNotMatch(html, /style=|<script>/);
@@ -36,13 +36,13 @@ test('queue page with no links today', () => {
 
 test('home box: count, full day, and no count without a queue', () => {
   const box = (q) => renderHome(index, S, { submit: true, queue: q });
-  assert.match(box({ limit: 10, left: 4, entries: [] }), /4 of 10 left today/);
-  const full = box({ limit: 10, left: 0, entries: [] });
+  assert.match(box({ limit: 10, window_hours: 3, left: 4, entries: [] }), /4 of 10 left · 10 links every 3 hours/);
+  const full = box({ limit: 10, window_hours: 3, left: 0, next_free_at: '2026-11-06T13:40:00+00:00', entries: [] });
   assert.match(full, /<input[^>]* disabled/);
-  assert.match(full, /again after midnight/);
+  assert.match(full, /Ask David for more\. The next one frees up at 14:40\./);
   const none = box(null);
   assert.match(none, /name="url"/);
-  assert.doesNotMatch(none, /left today/);
+  assert.doesNotMatch(none, /of 10 left/);
   assert.doesNotMatch(renderHome(index, S), /action="\/submit"/);
 });
 

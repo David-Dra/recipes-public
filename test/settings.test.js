@@ -56,7 +56,8 @@ test('repo settings.toml loads', () => {
 
 test('submit settings: defaults and checks', () => {
   assert.equal(DEFAULTS.submit_enabled, true);
-  assert.equal(DEFAULTS.ip_daily_limit, 3);
-  assert.throws(() => loadSettings(file('ip_daily_limit = 0\n')), /ip_daily_limit: must be/);
+  assert.equal(DEFAULTS.ask_for_more, 'Ask David for more.');
+  assert.throws(() => loadSettings(file('ip_daily_limit = 3\n')), /ip_daily_limit: unknown key/);   // no limit per visitor any more
+  assert.throws(() => loadSettings(file('ask_for_more = 5\n')), /ask_for_more: must be/);
   assert.throws(() => loadSettings(file('submit_enabled = "yes"\n')), /submit_enabled: must be true or false/);
 });

@@ -42,8 +42,8 @@ An unknown key or a wrong value stops the app at start with a message naming the
 
 The box on the home page sends an Instagram link to a Nexus hub, which writes the recipe into Cookbook. The site needs
 two secrets for it: `NEXUS_HUB_URL` and `NEXUS_HUB_TOKEN` (a hub token scoped to `/api/recipe-site/`). Without them the
-box is hidden. `/queue` shows today's links and their state. `submit_enabled` and `ip_daily_limit` are in
-`settings.toml`; the daily limit for all visitors is set in the hub.
+box is hidden. `/queue` shows today's links and their state. `submit_enabled` and `ask_for_more` are in
+`settings.toml`; the limit (10 links every 3 hours, all visitors together) is set in the hub.
 
 ## Impressum and Datenschutz
 

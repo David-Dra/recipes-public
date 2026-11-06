@@ -41,8 +41,8 @@ show_estimated_mark = true
 credit_creators = true
 
 # The "add a recipe from a reel link" box. Links go to Nexus, which writes the recipe into Cookbook.
-# Needs NEXUS_HUB_URL and NEXUS_HUB_TOKEN as secrets; without them the box is hidden. How many links a day are
-# allowed for everyone together is set in Nexus (RECIPE_SITE_DAILY_LIMIT), not here.
+# Needs NEXUS_HUB_URL and NEXUS_HUB_TOKEN as secrets; without them the box is hidden. How many links are allowed
+# (10 every 3 hours, all visitors together) is set in Nexus (RECIPE_SITE_LIMIT, RECIPE_SITE_WINDOW_HOURS), not here.
 submit_enabled = true
 
 # Background photo behind the glass: the name of a set of files in public/bg (<name>-1920.jpg/.webp/.avif,
@@ -51,5 +51,5 @@ background = "crete"
 background_credit = "Photo: Arthur Yeti / Unsplash"
 background_url = "https://unsplash.com/photos/rmrR8xasP2g"
 
-# Links per visitor and day (counted by a hashed IP address, kept in memory only).
-ip_daily_limit = 3
+# Shown when the links for now are used up (Nexus allows 10 every 3 hours, all visitors together).
+ask_for_more = "Ask David for more."

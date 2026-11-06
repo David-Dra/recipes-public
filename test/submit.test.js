@@ -54,27 +54,22 @@ test('a bad link is refused without asking the hub', async (t) => {
   assert.equal(fake.requests.length, 0);
 });
 
-test('the 4th link from one visitor today is refused', async (t) => {
+test('no limit per visitor: every link from one visitor reaches the hub', async (t) => {
   const { base, fake } = await start(t);
   const ip = { 'cf-connecting-ip': '198.51.100.7' };
-  for (let i = 0; i < 3; i++) assert.equal((await post(base, form(`https://www.instagram.com/reel/A${i}/`), ip)).status, 303);
-  const r = await post(base, form('https://www.instagram.com/reel/A9/'), ip);
-  assert.equal(r.status, 429);
-  assert.match(r.body, /3 links from you today/);
-  assert.equal(fake.requests.length, 3);
-  assert.equal((await post(base, form('https://www.instagram.com/reel/B1/'), { 'cf-connecting-ip': '198.51.100.8' })).status, 303);
+  for (let i = 0; i < 5; i++) assert.equal((await post(base, form(`https://www.instagram.com/reel/A${i}/`), ip)).status, 303);
+  assert.equal(fake.requests.length, 5);
 });
 
-test('hub cap reached: all of today is used up, and the visitor keeps their own slots', async (t) => {
+test('cap reached: ask David for more, and when the next slot frees up', async (t) => {
   const { base, fake } = await start(t);
-  fake.state.submit = { status: 429, body: { detail: { message: 'daily limit reached', left: 0 } } };
-  const ip = { 'cf-connecting-ip': '198.51.100.9' };
-  for (let i = 0; i < 4; i++) {
-    const r = await post(base, form(`https://www.instagram.com/reel/C${i}/`), ip);
-    assert.equal(r.status, 429);
-    assert.match(r.body, /All of today(&#39;|')s links are used/);
-  }
-  assert.equal(fake.requests.length, 4);
+  fake.state.submit = { status: 429, body: { detail: { message: 'limit reached', left: 0, next_free_at: '2026-11-06T13:40:00+00:00' } } };
+  const r = await post(base, form('https://www.instagram.com/reel/C1/'));
+  assert.equal(r.status, 429);
+  assert.match(r.body, /Ask David for more/);
+  assert.match(r.body, /14:40/);
+  const j = await post(base, form('https://www.instagram.com/reel/C2/'), { accept: 'application/json' });
+  assert.match(JSON.parse(j.body).message, /Ask David for more\..*14:40/);
 });
 
 test('hub down: adding is paused', async (t) => {
@@ -123,10 +118,10 @@ test('/queue renders, then the home shows the box with the count', async (t) => 
   const { base } = await start(t);
   const q = await get(base, '/queue');
   assert.equal(q.status, 200);
-  assert.match(q.body, /9 of 10 left today/);
+  assert.match(q.body, /9 of 10 left · 10 links every 3 hours/);
   const home = await get(base, '/');
   assert.match(home.body, /action="\/submit"/);
-  assert.match(home.body, /9 of 10 left today/);
+  assert.match(home.body, /9 of 10 left · 10 links every 3 hours/);
 });
 
 test('the home never waits for a hanging hub', async (t) => {
@@ -136,7 +131,7 @@ test('the home never waits for a hanging hub', async (t) => {
   const home = await get(base, '/');
   assert.ok(Date.now() - started < 250, `took ${Date.now() - started} ms`);
   assert.match(home.body, /action="\/submit"/);
-  assert.doesNotMatch(home.body, /left today/);
+  assert.doesNotMatch(home.body, /of 10 left/);
 });
 
 test('hub down: the home box says paused', async (t) => {
