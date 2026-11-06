@@ -159,3 +159,11 @@ progress { display: none; }
 .queue li:target { outline: 2px solid var(--accent); }
 .flash { color: inherit; font-weight: 600; }
 
+
+/* Footer and the legal pages */
+.foot { max-width: 1200px; margin: 28px auto 4px; text-align: center; font-size: 0.8rem; color: var(--muted); }
+.foot a { color: inherit; }
+.legal { max-width: 760px; margin: 0 auto; padding: 18px 20px; }
+.legal h1 { margin: 0 0 8px; font-size: 1.4rem; }
+.legal h2 { margin: 18px 0 4px; font-size: 1rem; }
+.legal p { margin: 0 0 8px; }

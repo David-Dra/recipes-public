@@ -50,5 +50,25 @@ export default {
     already: () => 'Already a recipe',
   },
   openRecipe: 'Open the recipe',
+  imprint: 'Impressum',
+  privacy: 'Datenschutz',
+  // The legal pages are German (German law applies to the site's owner)
+  legal: {
+    imprintTitle: 'Impressum',
+    imprintLaw: 'Angaben gemäß § 5 DDG',
+    contact: 'Kontakt',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    responsible: 'Verantwortlich für den Inhalt',
+    privacyTitle: 'Datenschutzerklärung',
+    privacy: [
+      ['Verantwortlicher', 'Verantwortlich für diese Website ist die im Impressum genannte Person (Kontakt unten).'],
+      ['Hosting und Auslieferung', 'Die Seiten werden über Cloudflare ausgeliefert (Cloudflare, Inc., USA). Cloudflare verarbeitet dabei technisch notwendige Verbindungsdaten wie die IP-Adresse, um die Seite auszuliefern und vor Angriffen zu schützen. Grundlage ist das berechtigte Interesse an einem sicheren Betrieb (Art. 6 Abs. 1 lit. f DSGVO).'],
+      ['Cookies und Tracking', 'Diese Website setzt keine Cookies und nutzt kein Tracking und keine Analyse-Dienste. Die gewählte Ansicht (Raster oder Liste) wird nur im eigenen Browser gespeichert (localStorage) und nicht übertragen.'],
+      ['Rezepte aus Reel-Links', 'Wer einen Instagram-Link einreicht, übermittelt nur diesen Link. Er wird an Nexus, den privaten Server des Betreibers, weitergegeben, der das Video auswertet und das Rezept in einer privaten Nextcloud speichert. Der Link und der Zeitpunkt erscheinen für den Tag öffentlich in der Warteschlange. Namen oder E-Mail-Adressen werden nicht erhoben.'],
+      ['Begrenzung pro Besucher', 'Damit niemand alle Plätze eines Tages belegt, zählt die Website Einreichungen pro IP-Adresse. Gespeichert wird dafür nur ein Hash der IP-Adresse mit einem zufälligen Schlüssel, ausschließlich im Arbeitsspeicher. Er wird um Mitternacht und bei jedem Neustart gelöscht.'],
+      ['Ihre Rechte', 'Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Widerspruch sowie das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Schreiben Sie dazu an die unten genannte Adresse.'],
+    ],
+  },
   original: 'Reel',
 };

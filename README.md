@@ -37,3 +37,17 @@ read the recipe share), `PORT` (default 3000), `SITE_DATA` (default `./data`).
 | `credit_creators` | `true` | Show "from a reel by @creator" |
 
 An unknown key or a wrong value stops the app at start with a message naming the key.
+
+## Adding recipes from reel links
+
+The box on the home page sends an Instagram link to a Nexus hub, which writes the recipe into Cookbook. The site needs
+two secrets for it: `NEXUS_HUB_URL` and `NEXUS_HUB_TOKEN` (a hub token scoped to `/api/recipe-site/`). Without them the
+box is hidden. `/queue` shows today's links and their state. `submit_enabled` and `ip_daily_limit` are in
+`settings.toml`; the daily limit for all visitors is set in the hub.
+
+## Impressum and Datenschutz
+
+Name, address and e-mail never go into this repo. Fill in a copy of `impressum.example.toml` and put it into the site's
+data folder as `impressum.toml` (on the website template: `pct push <ctid> impressum.toml /srv/site/data/impressum.toml`).
+The site picks it up without a restart and adds `/impressum`, `/datenschutz` and their footer links. Without the file
+they are left out. Check the wording of both pages yourself; it is a template, not legal advice.

@@ -1,0 +1,7 @@
+# Impressum data for /impressum and /datenschutz. Copy to the site's data folder as impressum.toml (never into this
+# repo): pct push <ctid> impressum.toml /srv/site/data/impressum.toml
+# Without the file both pages and their footer links are left out.
+name = "Max Mustermann"
+address = ["Musterstraße 1", "10115 Berlin", "Deutschland"]
+email = "kontakt@example.org"
+# phone = "+49 30 000000"   (optional)

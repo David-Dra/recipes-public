@@ -1,10 +1,11 @@
 // HTTP server: pages, images from SITE_DATA, a few static files. Started directly it also runs the sync.
 import { createServer } from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { renderHome, renderRecipe, renderNotFound, renderQueue, esc } from './render.js';
-import { makeHub } from './hub.js';
+import { renderHome, renderRecipe, renderNotFound, renderQueue, renderImpressum, renderDatenschutz, esc } from './render.js';
+import { loadLegal } from './legal.js';
+import { makeHub, hubFromEnv } from './hub.js';
 import { makeIpCap } from './ipcap.js';
 import { normalise } from './link.js';
 import T from './strings.js';
@@ -41,7 +42,16 @@ function withSlugs(queue, index) {
   return { ...queue, entries: queue.entries.map((e) => (bySc.has(e.shortcode) ? { ...e, slug: bySc.get(e.shortcode) } : e)) };
 }
 
-export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) }) {
+export function createApp({ settings: base, dataDir, getIndex, hub = makeHub({}) }) {
+  let s = base;
+  // impressum.toml is read again only when it changes (David pushes it onto the CT while the site runs)
+  let legalAt = null;
+  let legal = null;
+  const refreshLegal = () => {
+    let at = 0;
+    try { at = statSync(join(dataDir, 'impressum.toml')).mtimeMs; } catch { /* no file */ }
+    if (at !== legalAt) { legalAt = at; legal = at ? loadLegal(dataDir) : null; s = { ...base, legal: Boolean(legal) }; }
+  };
   const submitOn = s.submit_enabled && hub.configured;
   const ipcap = makeIpCap(s.ip_daily_limit);
   const origin = new URL(s.base_url).origin;
@@ -71,6 +81,7 @@ export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) })
   }
 
   return createServer((req, res) => {
+    refreshLegal();
     const send = (status, type, body, extra = {}) => {
       res.writeHead(status, { ...HEADERS, ...(s.indexable ? {} : { 'x-robots-tag': 'noindex' }), 'content-type': type, ...extra });
       res.end(req.method === 'HEAD' ? undefined : body);
@@ -115,6 +126,8 @@ export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) })
     if (path.startsWith('/static/') && Object.hasOwn(statics, path.slice(8))) {
       return send(200, STATIC[path.slice(8)], statics[path.slice(8)], { 'cache-control': 'public, max-age=300' });
     }
+    if (legal && path === '/impressum') return html(200, renderImpressum(legal, s));
+    if (legal && path === '/datenschutz') return html(200, renderDatenschutz(legal, s));
     if (path === '/theme.css') return send(200, 'text/css; charset=utf-8', theme, { 'cache-control': 'public, max-age=300' });
     if (path === '/robots.txt') {
       return send(200, 'text/plain', s.indexable ? `User-agent: *\nAllow: /\nSitemap: ${s.base_url}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n');
@@ -144,7 +157,9 @@ async function main() {
     console.log('sync off: NEXTCLOUD_URL, NEXTCLOUD_USER and NEXTCLOUD_APP_PASSWORD are not all set');
   }
   const port = Number(process.env.PORT) || 3000;
-  createApp({ settings, dataDir, getIndex: () => index }).listen(port, () => console.log(`recipes on :${port}`));
+  const hub = hubFromEnv(process.env);
+  if (!hub.configured) console.log('reel links off: NEXUS_HUB_URL and NEXUS_HUB_TOKEN are not both set');
+  createApp({ settings, dataDir, getIndex: () => index, hub }).listen(port, () => console.log(`recipes on :${port}`));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

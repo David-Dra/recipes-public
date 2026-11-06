@@ -44,3 +44,6 @@ export function makeHub({ url = '', token = '', timeoutMs = 5000, cacheMs = 1000
     },
   };
 }
+
+// The site's secrets (site secret set NEXUS_HUB_URL / NEXUS_HUB_TOKEN); without both the box stays hidden.
+export const hubFromEnv = (env) => makeHub({ url: env.NEXUS_HUB_URL || '', token: env.NEXUS_HUB_TOKEN || '' });

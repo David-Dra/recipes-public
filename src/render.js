@@ -9,6 +9,12 @@ export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ENT[c]);
 const num = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const grams = (v) => `${num(v)} g`;
 
+// s.legal: an impressum.toml is there (server sets it per request)
+function footer(s) {
+  const links = s.legal ? [`<a href="/impressum">${esc(T.imprint)}</a>`, `<a href="/datenschutz">${esc(T.privacy)}</a>`] : [];
+  return links.length ? `<footer class="foot">${links.join(' · ')}</footer>` : '';
+}
+
 function page(s, { title, description = '', path, image, body, bodyClass = '' }) {
   const og = [
     ['og:type', 'website'], ['og:title', title], ['og:description', description || s.tagline],
@@ -29,6 +35,7 @@ ${s.indexable ? '' : '<meta name="robots" content="noindex">\n'}${description ? 
 </head>
 <body class="${bodyClass}">
 ${body}
+${footer(s)}
 </body>
 </html>
 `;
@@ -184,3 +191,34 @@ ${note}
 </main>`;
   return page(s, { title: `${T.queueTitle} · ${s.title}`, path: '/queue', body, bodyClass: 'queue-page' });
 }
+
+const L = T.legal;
+const contact = (l) => `<p>${esc(L.email)}: <a href="mailto:${esc(l.email)}">${esc(l.email)}</a>${l.phone ? `<br>${esc(L.phone)}: ${esc(l.phone)}` : ''}</p>`;
+const person = (l) => `<p>${esc(l.name)}<br>${l.address.map(esc).join('<br>')}</p>`;
+
+function legalPage(s, title, path, inner) {
+  const body = `${topbar(s, false)}
+<main class="legal glass" lang="de">
+<h1>${esc(title)}</h1>
+${inner}
+</main>`;
+  return page(s, { title: `${title} · ${s.title}`, path, body, bodyClass: 'legal-page' });
+}
+
+export function renderImpressum(l, s) {
+  return legalPage(s, L.imprintTitle, '/impressum', `<h2>${esc(L.imprintLaw)}</h2>
+${person(l)}
+<h2>${esc(L.contact)}</h2>
+${contact(l)}
+<h2>${esc(L.responsible)}</h2>
+<p>${esc(l.name)}</p>`);
+}
+
+export function renderDatenschutz(l, s) {
+  const parts = L.privacy.map(([h, p]) => `<h2>${esc(h)}</h2>\n<p>${esc(p)}</p>`).join('\n');
+  return legalPage(s, L.privacyTitle, '/datenschutz', `${parts}
+<h2>${esc(L.contact)}</h2>
+${person(l)}
+${contact(l)}`);
+}
+

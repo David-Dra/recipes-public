@@ -64,3 +64,10 @@ test('without a hub url nothing is sent', async () => {
   assert.equal(await hub.queue(), null);
   assert.deepEqual(await hub.submit('x'), { status: 503, body: { message: 'paused' } });
 });
+
+test('hubFromEnv reads NEXUS_HUB_URL and NEXUS_HUB_TOKEN', async () => {
+  const { hubFromEnv } = await import('../src/hub.js');
+  assert.equal(hubFromEnv({}).configured, false);
+  assert.equal(hubFromEnv({ NEXUS_HUB_URL: 'http://192.0.2.1:8090' }).configured, false);
+  assert.equal(hubFromEnv({ NEXUS_HUB_URL: 'http://192.0.2.1:8090', NEXUS_HUB_TOKEN: 't' }).configured, true);
+});
