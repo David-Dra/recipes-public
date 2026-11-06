@@ -4,7 +4,9 @@
   "description": "Public, read-only recipe site that mirrors a Nextcloud Cookbook share",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test \"test/**/*.test.js\""
@@ -12,6 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "fast-xml-parser": "^5.12.0",
+    "sharp": "^0.35.5",
     "smol-toml": "^1.9.1"
   }
 }

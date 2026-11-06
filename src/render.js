@@ -34,9 +34,25 @@ ${body}
 `;
 }
 
-const photo = (r, kind, cls) => r.image[kind]
-  ? `<img class="${cls}" src="/img/${esc(r.image[kind])}" alt="" loading="lazy" decoding="async">`
-  : `<div class="${cls} noimg" aria-hidden="true">${esc([...r.name][0]?.toUpperCase() || '?')}</div>`;
+const noimg = (r, cls) => `<div class="${cls} noimg" aria-hidden="true">${esc([...r.name][0]?.toUpperCase() || '?')}</div>`;
+const img = (cls, src, extra = '', lazy = true) =>
+  `<img class="${cls}" src="/img/${esc(src)}"${extra} alt=""${lazy ? ' loading="lazy"' : ''} decoding="async">`;
+
+// Card photo: own WebP sizes (sync makes them from full.jpg); an index from before them falls back to Cookbook's files.
+function cardPhoto(r) {
+  const i = r.image;
+  if (i.w480) {
+    return img('thumb', i.w480, ` srcset="/img/${esc(i.w480)} 480w, /img/${esc(i.w960)} 960w"` +
+      ' sizes="(max-width: 559px) 100vw, (max-width: 899px) 50vw, (max-width: 1240px) 33vw, 400px"');
+  }
+  return i.thumb || i.full ? img('thumb', i.thumb || i.full) : noimg(r, 'thumb');
+}
+
+function heroPhoto(r) {
+  const i = r.image;
+  if (i.w1600) return img('heroimg', i.w1600, ` srcset="/img/${esc(i.w960)} 960w, /img/${esc(i.w1600)} 1600w" sizes="100vw"`, false);
+  return i.full ? img('heroimg', i.full, '', false) : noimg(r, 'heroimg');
+}
 
 function stats(r) {
   return [r.protein !== null && `${grams(r.protein)} ${T.protein}`, r.kcal !== null && `${num(r.kcal)} ${T.kcal}`,
@@ -48,7 +64,7 @@ function card(r, maxRatio) {
   const data = Object.entries({ ratio: r.ratio, protein: r.protein, kcal: r.kcal, minutes: r.minutes, created: r.created })
     .map(([k, v]) => (v === null || v === undefined ? '' : ` data-${k}="${esc(v)}"`)).join('');
   return `<a class="card glass" href="/r/${esc(r.slug)}" data-name="${esc(r.name)}" data-search="${esc(search)}"${data}>
-  <div class="thumbwrap">${photo(r, 'thumb', 'thumb')}${r.ratio !== null ? `<span class="badge">${esc(num(r.ratio))} g</span>` : ''}</div>
+  <div class="thumbwrap">${cardPhoto(r)}${r.ratio !== null ? `<span class="badge">${esc(num(r.ratio))} g</span>` : ''}</div>
   <div class="info"><h2>${esc(r.name)}</h2><p class="stats">${stats(r)}</p>${r.ratio !== null ? `<progress max="${esc(maxRatio)}" value="${esc(r.ratio)}"></progress>` : ''}</div>
   ${r.ratio !== null ? `<div class="big"><b>${esc(num(r.ratio))}</b><span>${esc(T.ratioShort)}</span></div>` : ''}
 </a>`;
@@ -115,7 +131,7 @@ export function renderRecipe(r, s) {
       <button type="button" data-step="1" aria-label="${esc(T.more)}">+</button></div>` : '';
   const body = `${topbar(s, false)}
 <main class="recipe">
-  <div class="hero">${photo(r, 'full', 'heroimg')}<a class="back" href="/">← ${esc(T.back)}</a></div>
+  <div class="hero">${heroPhoto(r)}<a class="back" href="/">← ${esc(T.back)}</a></div>
   <h1>${esc(r.name)}</h1>
   ${by ? `<p class="by">${by}</p>` : ''}
   ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ''}

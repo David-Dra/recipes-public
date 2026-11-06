@@ -12,7 +12,7 @@ import T from './strings.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STATIC = { 'app.css': 'text/css; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
   'sort.js': 'text/javascript; charset=utf-8', 'scale.js': 'text/javascript; charset=utf-8' };
-const IMAGE = /^\/img\/([0-9]+-[0-9a-f]{8}-(?:full|thumb)\.jpg)$/;
+const IMAGE = /^\/img\/([0-9]+-[0-9a-f]{8}-(?:(?:full|thumb)\.jpg|(?:480|960|1600)\.webp))$/;
 const HEADERS = {
   'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
@@ -106,7 +106,7 @@ export function createApp({ settings: s, dataDir, getIndex, hub = makeHub({}) })
       } catch {
         // missing, or deleted by the sync a moment ago: a 404, never a crash
       }
-      if (data) return send(200, 'image/jpeg', data, { 'cache-control': 'public, max-age=31536000, immutable' });
+      if (data) return send(200, img[1].endsWith('.webp') ? 'image/webp' : 'image/jpeg', data, { 'cache-control': 'public, max-age=31536000, immutable' });
     }
     if (path.startsWith('/static/') && Object.hasOwn(statics, path.slice(8))) {
       return send(200, STATIC[path.slice(8)], statics[path.slice(8)], { 'cache-control': 'public, max-age=300' });

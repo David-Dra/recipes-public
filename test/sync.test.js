@@ -44,7 +44,7 @@ test('first sync writes index and images', async (t) => {
   assert.match(p.image.thumb, /^101-[0-9a-f]{8}-thumb\.jpg$/);
   assert.ok(existsSync(join(dataDir, 'img', p.image.full)));
   const c = index.recipes.find((r) => r.name === 'Turkey Chili');
-  assert.deepEqual(c.image, { full: null, thumb: null });
+  assert.deepEqual(c.image, { full: null, thumb: null, w480: null, w960: null, w1600: null });
 });
 
 test('second sync with nothing changed downloads nothing', async (t) => {
